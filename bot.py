@@ -13,26 +13,10 @@ _database = None
 def start(bot, update):
     """
     Хэндлер для состояния START.
-    
-    Бот отвечает пользователю фразой "Привет!" и переводит его в состояние ECHO.
-    Теперь в ответ на его команды будет запускаеться хэндлер echo.
     """
-    keyboard = []
-    for product in fetch_products():
-        keyboard.append(
-            [InlineKeyboardButton(product['name'], callback_data=product['id'])]
-        )
-        # bot.send_photo(chat_id=chat_id, photo='https://telegram.org/img/t_logo.png')
-
-
-    # keyboard = [[InlineKeyboardButton("Option 1", callback_data='1'),
-    #              InlineKeyboardButton("Option 2", callback_data='2')],
-
-    #             [InlineKeyboardButton("Option 3", callback_data='3')]]
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Please choose:', reply_markup=reply_markup)
+    show_menu(bot, update)
     return "HANDLE_MENU"
+
 
 def handle_menu(bot, update):
     """
@@ -48,25 +32,41 @@ def handle_menu(bot, update):
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
     )
+    keyboard = [
+        [InlineKeyboardButton('Назад', callback_data='HANDLE_MENU')],
+    ]
     bot.send_photo(
         chat_id=query.message.chat_id,
         photo=image_url,
         caption=product_info,
+        reply_markup=InlineKeyboardMarkup(keyboard),
     )
-    return 'HANDLE_MENU'
+    return 'HANDLE_DESCRIPTION'
 
 
-def echo(bot, update):
-    """
-    Хэндлер для состояния ECHO.
-    
-    Бот отвечает пользователю тем же, что пользователь ему написал.
-    Оставляет пользователя в состоянии ECHO.
-    """
-    users_reply = update.message.text
-    update.message.reply_text(users_reply)
-    return "ECHO"
+def handle_description(bot, update):
+    # query = update.callback_query
+    # bot.delete_message(
+    #     chat_id=query.message.chat_id,
+    #     message_id=query.message.message_id,
+    # )
+    query = update.callback_query
+    bot.delete_message(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+    )
+    show_menu(bot, update)
+    return 'START'
 
+
+def show_menu(bot, update):
+    keyboard = []
+    for product in fetch_products():
+        keyboard.append(
+            [InlineKeyboardButton(product['name'], callback_data=product['id'])]
+        )
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Please choose:', reply_markup=reply_markup)
 
 def handle_users_reply(bot, update):
     """
@@ -98,8 +98,8 @@ def handle_users_reply(bot, update):
     
     states_functions = {
         'START': start,
-        'ECHO': echo,
         'HANDLE_MENU': handle_menu,
+        'HANDLE_DESCRIPTION': handle_description,
     }
     state_handler = states_functions[user_state]
     # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
