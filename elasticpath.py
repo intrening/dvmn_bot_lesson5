@@ -5,6 +5,7 @@ from pprint import pprint
 
 EP_ACCESS_TOKEN = None
 
+
 def fetch_products():
     url = 'https://api.moltin.com/v2/products'
     headers = {'Authorization': f'Bearer {get_ep_access_token()}'}
@@ -19,6 +20,7 @@ def get_image_url(id):
     response = requests.get(url, headers=headers)
     response.raise_for_status() 
     return response.json()['data']['link']['href']
+
 
 def get_project(id):
     url = f'https://api.moltin.com/v2/products/{id}'
@@ -43,32 +45,27 @@ def get_ep_access_token():
     return EP_ACCESS_TOKEN
 
 
-def shop():
-    # добавляем в корзину
-    access_token = '9d07477dc408340b76802dbcc87e8faedb0bb797'
-    reference = 'ref1'
-    prod_id = response.json()['data'][1]['id']
-
-    url = f'https://api.moltin.com/v2/carts/:{reference}/items'
+def add_to_cart(prod_id, quantity, chat_id):
+    url = f'https://api.moltin.com/v2/carts/:{chat_id}/items'
     headers = {
-        'Authorization': f'Bearer {access_token}',
+        'Authorization': f'Bearer {get_ep_access_token()}',
         'Content-Type': 'application/json',
     }
     payload = {
         'data': {
-            'quantity': 1,
-            'type': 'cart_item',
             'id': prod_id,
+            'quantity': int(quantity),
+            'type': 'cart_item',
         }
     }
     response = requests.post(url, json=payload, headers=headers)
     response.raise_for_status()
 
 
-    # получаем корзину
-    url = f'https://api.moltin.com/v2/carts/:{reference}/items'
+def show_cart(chat_id):
+    url = f'https://api.moltin.com/v2/carts/:{chat_id}/items'
     headers = {
-        'Authorization': f'Bearer {access_token}',
+        'Authorization': f'Bearer {get_ep_access_token()}',
     }
     response = requests.get(url, headers=headers)
     response.raise_for_status()

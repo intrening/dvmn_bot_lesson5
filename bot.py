@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import redis
 
@@ -6,7 +7,9 @@ from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from elasticpath import fetch_products, get_project, get_image_url
+from elasticpath import (
+    fetch_products, get_project, get_image_url, add_to_cart, show_cart,
+)
 
 _database = None
 
@@ -33,7 +36,15 @@ def handle_menu(bot, update):
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
     )
+    quantity_choises_list = [1, 5, 10]
+    choise_keyboard = []
+    for quantity in quantity_choises_list:
+        choise_keyboard.append(
+            InlineKeyboardButton(f'+{quantity} кг',
+            callback_data=f'{query.data} {quantity}'),
+        )
     keyboard = [
+        choise_keyboard,
         [InlineKeyboardButton('Назад', callback_data='HANDLE_MENU')],
     ]
     bot.send_photo(
@@ -47,16 +58,25 @@ def handle_menu(bot, update):
 
 def handle_description(bot, update):
     query = update.callback_query
-    bot.delete_message(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
+    if query.data == 'HANDLE_MENU':
+        bot.delete_message(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+        )
+        bot.send_message(
+            text='Meню:',
+            chat_id=query.message.chat_id,
+            reply_markup=get_menu_keyboard_markup(),
+        )
+        return 'HANDLE_MENU'
+    prod_id, quantity = query.data.split(' ')
+    add_to_cart(
+        prod_id=prod_id,
+        quantity=quantity,
+        chat_id=query.message.chat_id
     )
-    bot.send_message(
-        text='Meню:',
-        chat_id=query.message.chat_id,
-        reply_markup=get_menu_keyboard_markup(),
-    )
-    return 'HANDLE_MENU'
+    show_cart(chat_id=query.message.chat_id)
+    return 'HANDLE_DESCRIPTION'
 
 
 def get_menu_keyboard_markup():
