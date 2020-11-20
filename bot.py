@@ -14,7 +14,8 @@ def start(bot, update):
     """
     Хэндлер для состояния START.
     """
-    show_menu(bot, update)
+    reply_markup = get_menu_keyboard_markup()
+    update.message.reply_text('Please choose:', reply_markup=reply_markup)
     return "HANDLE_MENU"
 
 
@@ -45,28 +46,27 @@ def handle_menu(bot, update):
 
 
 def handle_description(bot, update):
-    # query = update.callback_query
-    # bot.delete_message(
-    #     chat_id=query.message.chat_id,
-    #     message_id=query.message.message_id,
-    # )
     query = update.callback_query
     bot.delete_message(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
     )
-    show_menu(bot, update)
-    return 'START'
+    bot.send_message(
+        text='Meню:',
+        chat_id=query.message.chat_id,
+        reply_markup=get_menu_keyboard_markup(),
+    )
+    return 'HANDLE_MENU'
 
 
-def show_menu(bot, update):
+def get_menu_keyboard_markup():
     keyboard = []
     for product in fetch_products():
         keyboard.append(
             [InlineKeyboardButton(product['name'], callback_data=product['id'])]
         )
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Please choose:', reply_markup=reply_markup)
+    return InlineKeyboardMarkup(keyboard)
+
 
 def handle_users_reply(bot, update):
     """
