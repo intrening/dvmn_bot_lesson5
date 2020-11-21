@@ -69,4 +69,25 @@ def show_cart(chat_id):
     }
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    pprint(response.json())
+
+    cart_info = ''
+    for item in response.json()['data']:
+        name = item['name']
+        description = item['description']
+        price_per_unit = item['meta']['display_price']['with_tax']['unit']['formatted']
+        amount = item['meta']['display_price']['with_tax']['value']['amount']/100
+        price = item['meta']['display_price']['with_tax']['value']['formatted']
+
+        cart_info += f"{name}\n{description}\n{price_per_unit} per kg\n{amount} kg in cart for {price}\n\n"
+
+    url = f'https://api.moltin.com/v2/carts/:{chat_id}'
+    headers = {
+        'Authorization': f'Bearer {get_ep_access_token()}',
+    }
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    total_price = response.json()['data']['meta']['display_price']['with_tax']['formatted']
+
+    cart_info += f'Total: {total_price}'
+
+    return cart_info

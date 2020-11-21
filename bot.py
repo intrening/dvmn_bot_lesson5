@@ -27,14 +27,22 @@ def handle_menu(bot, update):
     Хэндлер для состояния HANDLE_MENU.
     """
     query = update.callback_query
-    product = get_project(id=query.data)
-    product_info = f"{product['name']}\n{product['description']}\nЦена {product['price'][0]['amount']} {product['price'][0]['currency']}\n"
-    image_url = get_image_url(
-        id=product['relationships']['main_image']['data']['id']
-    )
     bot.delete_message(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
+    )
+    if query.data == 'HANDLE_CART':
+        bot.send_message(
+            text=show_cart(chat_id=query.message.chat_id),
+            chat_id=query.message.chat_id,
+            reply_markup=get_menu_keyboard_markup(),
+        )
+        return 'HANDLE_MENU'
+
+    product = get_project(id=query.data)
+    product_info = f"{product['name']}\n{product['description']}\nЦена {product['price'][0]['amount']/100} {product['price'][0]['currency']}\n"
+    image_url = get_image_url(
+        id=product['relationships']['main_image']['data']['id']
     )
     quantity_choises_list = [1, 5, 10]
     choise_keyboard = []
@@ -75,8 +83,20 @@ def handle_description(bot, update):
         quantity=quantity,
         chat_id=query.message.chat_id
     )
-    show_cart(chat_id=query.message.chat_id)
     return 'HANDLE_DESCRIPTION'
+
+# def handle_cart(bot, update):
+#     query = update.callback_query
+#     bot.delete_message(
+#         chat_id=query.message.chat_id,
+#         message_id=query.message.message_id,
+#     )
+#     bot.send_message(
+#         text=show_cart(chat_id=query.message.chat_id),
+#         chat_id=query.message.chat_id,
+#         reply_markup=get_menu_keyboard_markup(),
+#     )
+#     return 'START'
 
 
 def get_menu_keyboard_markup():
@@ -85,6 +105,9 @@ def get_menu_keyboard_markup():
         keyboard.append(
             [InlineKeyboardButton(product['name'], callback_data=product['id'])]
         )
+    keyboard.append(
+        [InlineKeyboardButton('Корзина', callback_data='HANDLE_CART')]
+    )
     return InlineKeyboardMarkup(keyboard)
 
 
@@ -120,6 +143,7 @@ def handle_users_reply(bot, update):
         'START': start,
         'HANDLE_MENU': handle_menu,
         'HANDLE_DESCRIPTION': handle_description,
+        # 'HANDLE_CART': handle_shop,
     }
     state_handler = states_functions[user_state]
     # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
