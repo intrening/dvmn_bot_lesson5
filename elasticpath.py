@@ -22,7 +22,7 @@ def get_image_url(id):
     return response.json()['data']['link']['href']
 
 
-def get_product(id):
+def get_product(product_id):
     url = f'https://api.moltin.com/v2/products/{id}'
     headers = {'Authorization': f'Bearer {get_ep_access_token()}'}
     response = requests.get(url, headers=headers)
@@ -45,7 +45,7 @@ def get_ep_access_token():
     return EP_ACCESS_TOKEN
 
 
-def add_to_cart(prod_id, quantity, chat_id):
+def add_to_cart(product_id, quantity, chat_id):
     url = f'https://api.moltin.com/v2/carts/:{chat_id}/items'
     headers = {
         'Authorization': f'Bearer {get_ep_access_token()}',
@@ -53,7 +53,7 @@ def add_to_cart(prod_id, quantity, chat_id):
     }
     payload = {
         'data': {
-            'id': prod_id,
+            'id': product_id,
             'quantity': int(quantity),
             'type': 'cart_item',
         }
@@ -62,7 +62,14 @@ def add_to_cart(prod_id, quantity, chat_id):
     response.raise_for_status()
 
 
-def show_cart(chat_id):
+def remove_from_cart(product_id, chat_id):
+    url = f'https://api.moltin.com/v2/carts/:{chat_id}/items/{product_id}'
+    headers = {'Authorization': f'Bearer {get_ep_access_token()}',}
+    response = requests.delete(url, headers=headers)
+    response.raise_for_status()
+
+
+def get_carts_products(chat_id):
     url = f'https://api.moltin.com/v2/carts/:{chat_id}/items'
     headers = {
         'Authorization': f'Bearer {get_ep_access_token()}',
@@ -70,24 +77,14 @@ def show_cart(chat_id):
     response = requests.get(url, headers=headers)
     response.raise_for_status()
 
-    cart_info = ''
-    for item in response.json()['data']:
-        name = item['name']
-        description = item['description']
-        price_per_unit = item['meta']['display_price']['with_tax']['unit']['formatted']
-        amount = item['meta']['display_price']['with_tax']['value']['amount']/100
-        price = item['meta']['display_price']['with_tax']['value']['formatted']
+    return response.json()['data']
 
-        cart_info += f"{name}\n{description}\n{price_per_unit} per kg\n{amount} kg in cart for {price}\n\n"
-
+def get_total_price(chat_id):
     url = f'https://api.moltin.com/v2/carts/:{chat_id}'
     headers = {
         'Authorization': f'Bearer {get_ep_access_token()}',
     }
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    total_price = response.json()['data']['meta']['display_price']['with_tax']['formatted']
+    return response.json()['data']['meta']['display_price']['with_tax']['formatted']
 
-    cart_info += f'Total: {total_price}'
-
-    return cart_info

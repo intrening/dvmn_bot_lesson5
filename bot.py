@@ -8,7 +8,9 @@ from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from elasticpath import (
-    fetch_products, get_product, get_image_url, add_to_cart, show_cart,
+    fetch_products, get_product, get_image_url,
+    add_to_cart, get_carts_products, get_total_price,
+    remove_from_cart,
 )
 
 _database = None
@@ -32,17 +34,34 @@ def handle_menu(bot, update):
         message_id=query.message.message_id,
     )
     if query.data == 'HANDLE_CART':
-        keyboard = [
+        keyboard = []
+        cart_info = ''
+        for item in get_carts_products(chat_id=query.message.chat_id):
+            product_cart_id = item['id']
+            name = item['name']
+            description = item['description']
+            price_per_unit = item['meta']['display_price']['with_tax']['unit']['formatted']
+            amount = item['meta']['display_price']['with_tax']['value']['amount']/100
+            price = item['meta']['display_price']['with_tax']['value']['formatted']
+            cart_info += f"{name}\n{description}\n{price_per_unit} per kg\n{amount} kg in cart for {price}\n\n"
+
+            keyboard.append(
+                [InlineKeyboardButton(
+                    f'Убрать из корзины {name}', callback_data=product_cart_id
+                )]
+            )
+        cart_info += f'Total: {get_total_price(chat_id=query.message.chat_id)}'
+        keyboard.append(
             [InlineKeyboardButton('В меню', callback_data='HANDLE_MENU')]
-        ]
+        )
         bot.send_message(
-            text=show_cart(chat_id=query.message.chat_id),
+            text=cart_info,
             chat_id=query.message.chat_id,
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
         return 'HANDLE_CART'
 
-    product = get_product(id=query.data)
+    product = get_product(product_id=query.data)
     product_info = f"{product['name']}\n{product['description']}\nЦена {product['price'][0]['amount']/100} {product['price'][0]['currency']}\n"
     image_url = get_image_url(
         id=product['relationships']['main_image']['data']['id']
@@ -80,9 +99,9 @@ def handle_description(bot, update):
             reply_markup=get_menu_keyboard_markup(),
         )
         return 'HANDLE_MENU'
-    prod_id, quantity = query.data.split(' ')
+    product_id, quantity = query.data.split(' ')
     add_to_cart(
-        prod_id=prod_id,
+        product_id=product_id,
         quantity=quantity,
         chat_id=query.message.chat_id
     )
@@ -101,6 +120,8 @@ def handle_cart(bot, update):
             reply_markup=get_menu_keyboard_markup(),
         )
         return 'HANDLE_MENU'
+    remove_from_cart(product_id=query.data, chat_id=query.message.chat_id)
+    
     return 'HANDLE_CART'
 
 
