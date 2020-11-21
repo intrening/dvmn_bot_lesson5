@@ -22,7 +22,7 @@ def get_image_url(id):
     return response.json()['data']['link']['href']
 
 
-def get_project(id):
+def get_product(id):
     url = f'https://api.moltin.com/v2/products/{id}'
     headers = {'Authorization': f'Bearer {get_ep_access_token()}'}
     response = requests.get(url, headers=headers)
