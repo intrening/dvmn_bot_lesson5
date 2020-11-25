@@ -1,6 +1,5 @@
 import requests
 import os
-from pprint import pprint
 
 
 EP_ACCESS_TOKEN = None
@@ -10,7 +9,7 @@ def fetch_products():
     url = 'https://api.moltin.com/v2/products'
     headers = {'Authorization': f'Bearer {get_ep_access_token()}'}
     response = requests.get(url, headers=headers)
-    response.raise_for_status() 
+    response.raise_for_status()
     return response.json()['data']
 
 
@@ -18,7 +17,7 @@ def get_image_url(id):
     url = f'https://api.moltin.com/v2/files/{id}'
     headers = {'Authorization': f'Bearer {get_ep_access_token()}'}
     response = requests.get(url, headers=headers)
-    response.raise_for_status() 
+    response.raise_for_status()
     return response.json()['data']['link']['href']
 
 
@@ -26,7 +25,7 @@ def get_product(product_id):
     url = f'https://api.moltin.com/v2/products/{product_id}'
     headers = {'Authorization': f'Bearer {get_ep_access_token()}'}
     response = requests.get(url, headers=headers)
-    response.raise_for_status() 
+    response.raise_for_status()
     return response.json()['data']
 
 
@@ -64,7 +63,7 @@ def add_to_cart(product_id, quantity, chat_id):
 
 def remove_from_cart(product_id, chat_id):
     url = f'https://api.moltin.com/v2/carts/:{chat_id}/items/{product_id}'
-    headers = {'Authorization': f'Bearer {get_ep_access_token()}',}
+    headers = {'Authorization': f'Bearer {get_ep_access_token()}', }
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
 
@@ -79,6 +78,7 @@ def get_carts_products(chat_id):
 
     return response.json()['data']
 
+
 def get_total_price(chat_id):
     url = f'https://api.moltin.com/v2/carts/:{chat_id}'
     headers = {
@@ -88,8 +88,9 @@ def get_total_price(chat_id):
     response.raise_for_status()
     return response.json()['data']['meta']['display_price']['with_tax']['formatted']
 
+
 def create_customer(name, email):
-    url = f'https://api.moltin.com/v2/customers/'
+    url = 'https://api.moltin.com/v2/customers/'
     headers = {
         'Authorization': f'Bearer {get_ep_access_token()}',
     }
