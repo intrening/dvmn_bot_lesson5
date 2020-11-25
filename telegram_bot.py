@@ -3,6 +3,7 @@ import json
 import logging
 import redis
 
+from telegram_logger import TelegramLogsHandler
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -14,6 +15,8 @@ from elasticpath import (
 )
 
 _database = None
+logger = logging.getLogger("dvmn_bot_telegram")
+
 
 def start(bot, update):
     """
@@ -218,10 +221,20 @@ def get_database_connection():
 
 
 if __name__ == '__main__':
+    debug_bot_token = os.environ['DEBUG_TELEGRAM_BOT_TOKEN']
+    debug_chat_id = os.environ['DEBUG_TELEGRAM_CHAT_ID']
+    logger.setLevel(logging.INFO)
+    logger.addHandler(TelegramLogsHandler(
+        debug_bot_token=debug_bot_token,
+        chat_id=debug_chat_id,
+    ))
+
     token = os.getenv('TELEGRAM_BOT_TOKEN')
     updater = Updater(token)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
+    
+    logger.info('Бот Интернет-магазина в Telegram запущен')
     updater.start_polling()
