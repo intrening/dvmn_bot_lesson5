@@ -88,3 +88,17 @@ def get_total_price(chat_id):
     response.raise_for_status()
     return response.json()['data']['meta']['display_price']['with_tax']['formatted']
 
+def create_customer(name, email):
+    url = f'https://api.moltin.com/v2/customers/'
+    headers = {
+        'Authorization': f'Bearer {get_ep_access_token()}',
+    }
+    payload = {
+        'data': {
+            'type': 'customer',
+            'name': name,
+            'email': email,
+        }
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    response.raise_for_status()

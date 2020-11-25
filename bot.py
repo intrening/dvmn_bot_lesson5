@@ -10,7 +10,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from elasticpath import (
     fetch_products, get_product, get_image_url,
     add_to_cart, get_carts_products, get_total_price,
-    remove_from_cart,
+    remove_from_cart, create_customer,
 )
 
 _database = None
@@ -136,9 +136,12 @@ def handle_cart(bot, update):
     return 'HANDLE_CART'
 
 def waiting_email(bot, update):
-    waiting_email = update.message.text
+    create_customer(
+        name=update.message.chat.first_name,
+        email=update.message.text,
+    )
     bot.send_message(
-            text='Ваш емайл: ' + waiting_email,
+            text='Ваш емайл добавлен в CRM',
             chat_id=update.message.chat_id,
         )
     return 'HANDLE_CART'
