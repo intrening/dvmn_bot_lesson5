@@ -23,7 +23,7 @@ def get_image_url(id):
 
 
 def get_product(product_id):
-    url = f'https://api.moltin.com/v2/products/{id}'
+    url = f'https://api.moltin.com/v2/products/{product_id}'
     headers = {'Authorization': f'Bearer {get_ep_access_token()}'}
     response = requests.get(url, headers=headers)
     response.raise_for_status() 

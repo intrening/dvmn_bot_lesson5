@@ -51,9 +51,10 @@ def handle_menu(bot, update):
                 )]
             )
         cart_info += f'Total: {get_total_price(chat_id=query.message.chat_id)}'
-        keyboard.append(
+        keyboard += [
+            [InlineKeyboardButton('Оплатить', callback_data='WAITING_EMAIL')],
             [InlineKeyboardButton('В меню', callback_data='HANDLE_MENU')]
-        )
+        ]
         bot.send_message(
             text=cart_info,
             chat_id=query.message.chat_id,
@@ -109,6 +110,16 @@ def handle_description(bot, update):
 
 def handle_cart(bot, update):
     query = update.callback_query
+    if query.data == 'WAITING_EMAIL':
+        bot.delete_message(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+        )
+        bot.send_message(
+            text='Введите ваш емайл:',
+            chat_id=query.message.chat_id,
+        )
+        return 'WAITING_EMAIL'
     if query.data == 'HANDLE_MENU':
         bot.delete_message(
             chat_id=query.message.chat_id,
@@ -122,6 +133,14 @@ def handle_cart(bot, update):
         return 'HANDLE_MENU'
     remove_from_cart(product_id=query.data, chat_id=query.message.chat_id)
     
+    return 'HANDLE_CART'
+
+def waiting_email(bot, update):
+    waiting_email = update.message.text
+    bot.send_message(
+            text='Ваш емайл: ' + waiting_email,
+            chat_id=update.message.chat_id,
+        )
     return 'HANDLE_CART'
 
 
@@ -170,6 +189,7 @@ def handle_users_reply(bot, update):
         'HANDLE_MENU': handle_menu,
         'HANDLE_DESCRIPTION': handle_description,
         'HANDLE_CART': handle_cart,
+        'WAITING_EMAIL': waiting_email,
     }
     state_handler = states_functions[user_state]
     # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
