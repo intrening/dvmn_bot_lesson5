@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 import redis
 
@@ -19,18 +18,12 @@ logger = logging.getLogger("dvmn_bot_telegram")
 
 
 def start(bot, update):
-    """
-    Хэндлер для состояния START.
-    """
     reply_markup = get_menu_keyboard_markup()
     update.message.reply_text('Please choose:', reply_markup=reply_markup)
     return "HANDLE_MENU"
 
 
 def handle_menu(bot, update):
-    """
-    Хэндлер для состояния HANDLE_MENU.
-    """
     query = update.callback_query
     bot.delete_message(
         chat_id=query.message.chat_id,
@@ -74,8 +67,10 @@ def handle_menu(bot, update):
     choise_keyboard = []
     for quantity in quantity_choises_list:
         choise_keyboard.append(
-            InlineKeyboardButton(f'+{quantity} кг',
-            callback_data=f'{query.data} {quantity}'),
+            InlineKeyboardButton(
+                f'+{quantity} кг',
+                callback_data=f'{query.data} {quantity}'
+            ),
         )
     keyboard = [
         choise_keyboard,
@@ -103,6 +98,7 @@ def handle_description(bot, update):
             reply_markup=get_menu_keyboard_markup(),
         )
         return 'HANDLE_MENU'
+
     product_id, quantity = query.data.split(' ')
     add_to_cart(
         product_id=product_id,
@@ -110,6 +106,7 @@ def handle_description(bot, update):
         chat_id=query.message.chat_id
     )
     return 'HANDLE_DESCRIPTION'
+
 
 def handle_cart(bot, update):
     query = update.callback_query
@@ -134,9 +131,10 @@ def handle_cart(bot, update):
             reply_markup=get_menu_keyboard_markup(),
         )
         return 'HANDLE_MENU'
+
     remove_from_cart(product_id=query.data, chat_id=query.message.chat_id)
-    
     return 'HANDLE_CART'
+
 
 def waiting_email(bot, update):
     create_customer(
@@ -163,19 +161,6 @@ def get_menu_keyboard_markup():
 
 
 def handle_users_reply(bot, update):
-    """
-    Функция, которая запускается при любом сообщении от пользователя и решает как его обработать.
-
-    Эта функция запускается в ответ на эти действия пользователя:
-        * Нажатие на inline-кнопку в боте
-        * Отправка сообщения боту
-        * Отправка команды боту
-    Она получает стейт пользователя из базы данных и запускает соответствующую функцию-обработчик (хэндлер).
-    Функция-обработчик возвращает следующее состояние, которое записывается в базу данных.
-    Если пользователь только начал пользоваться ботом, Telegram форсит его написать "/start",
-    поэтому по этой фразе выставляется стартовое состояние.
-    Если пользователь захочет начать общение с ботом заново, он также может воспользоваться этой командой.
-    """
     db = get_database_connection()
     if update.message:
         user_reply = update.message.text
@@ -189,7 +174,7 @@ def handle_users_reply(bot, update):
         user_state = 'START'
     else:
         user_state = db.get(chat_id).decode("utf-8")
-    
+
     states_functions = {
         'START': start,
         'HANDLE_MENU': handle_menu,
@@ -205,18 +190,18 @@ def handle_users_reply(bot, update):
         next_state = state_handler(bot, update)
         db.set(chat_id, next_state)
     except Exception as err:
-        print(err)
+        logger.error(err)
+
 
 def get_database_connection():
-    """
-    Возвращает конекшн с базой данных Redis, либо создаёт новый, если он ещё не создан.
-    """
     global _database
     if _database is None:
         database_password = os.getenv("REDIS_PASSWORD")
         database_host = os.getenv("REDIS_HOST")
         database_port = os.getenv("REDIS_PORT")
-        _database = redis.Redis(host=database_host, port=database_port, password=database_password)
+        _database = redis.Redis(
+            host=database_host, port=database_port, password=database_password
+        )
     return _database
 
 
@@ -235,6 +220,6 @@ if __name__ == '__main__':
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
-    
+
     logger.info('Бот Интернет-магазина в Telegram запущен')
     updater.start_polling()
