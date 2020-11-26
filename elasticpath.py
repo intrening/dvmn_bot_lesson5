@@ -1,8 +1,9 @@
 import requests
 import os
+from datetime import timedelta, datetime
 
 
-EP_ACCESS_TOKEN = None
+EP_ACCESS_TOKEN = EP_TOKEN_TIME = None
 
 
 def fetch_products():
@@ -31,7 +32,9 @@ def get_product(product_id):
 
 def get_ep_access_token():
     global EP_ACCESS_TOKEN
-    if not EP_ACCESS_TOKEN:
+    global EP_TOKEN_TIME
+
+    if not EP_ACCESS_TOKEN or datetime.now() > EP_TOKEN_TIME + timedelta(hours=1):
         client_id = os.environ.get('EP_CLIENT_ID')
         url = 'https://api.moltin.com/oauth/access_token'
         payload = {
@@ -41,6 +44,7 @@ def get_ep_access_token():
         response = requests.post(url, data=payload)
         response.raise_for_status()
         EP_ACCESS_TOKEN = response.json()['access_token']
+        EP_TOKEN_TIME = datetime.now()
     return EP_ACCESS_TOKEN
 
 
