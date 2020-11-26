@@ -180,14 +180,8 @@ def handle_users_reply(bot, update):
         'WAITING_EMAIL': waiting_email,
     }
     state_handler = states_functions[user_state]
-    # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
-    # Оставляю этот try...except, чтобы код не падал молча.
-    # Этот фрагмент можно переписать.
-    try:
-        next_state = state_handler(bot, update)
-        db.set(chat_id, next_state)
-    except Exception as err:
-        logger.error(err)
+    next_state = state_handler(bot, update)
+    db.set(chat_id, next_state)
 
 
 def get_database_connection():
@@ -202,6 +196,10 @@ def get_database_connection():
     return _database
 
 
+def error_handler(bot, update, err):
+    logger.error(err)
+
+
 if __name__ == '__main__':
     debug_bot_token = os.environ['DEBUG_TELEGRAM_BOT_TOKEN']
     debug_chat_id = os.environ['DEBUG_TELEGRAM_CHAT_ID']
@@ -214,6 +212,7 @@ if __name__ == '__main__':
     token = os.getenv('TELEGRAM_BOT_TOKEN')
     updater = Updater(token)
     dispatcher = updater.dispatcher
+    dispatcher.add_error_handler(error_handler)
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
