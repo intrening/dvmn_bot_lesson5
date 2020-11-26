@@ -36,9 +36,10 @@ def handle_menu(bot, update):
             product_cart_id = item['id']
             name = item['name']
             description = item['description']
-            price_per_unit = item['meta']['display_price']['with_tax']['unit']['formatted']
-            amount = item['meta']['display_price']['with_tax']['value']['amount']/100
-            price = item['meta']['display_price']['with_tax']['value']['formatted']
+            item_info = item['meta']['display_price']['with_tax']
+            price_per_unit = item_info['unit']['formatted']
+            amount = item_info['value']['amount']/100
+            price = item_info['value']['formatted']
             cart_info += f"{name}\n{description}\n{price_per_unit} per kg\n{amount} kg in cart for {price}\n\n"
 
             keyboard.append(
@@ -59,7 +60,9 @@ def handle_menu(bot, update):
         return 'HANDLE_CART'
 
     product = get_product(product_id=query.data)
-    product_info = f"{product['name']}\n{product['description']}\nЦена {product['price'][0]['amount']/100} {product['price'][0]['currency']}\n"
+    price = product['price'][0]['amount']/100
+    currency = product['price'][0]['currency']
+    product_info = f"{product['name']}\n{product['description']}\nЦена {price} {currency}\n"
     image_url = get_image_url(
         id=product['relationships']['main_image']['data']['id']
     )
