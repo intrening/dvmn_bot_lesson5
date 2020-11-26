@@ -66,15 +66,11 @@ def handle_menu(bot, update):
     image_url = get_image_url(
         id=product['relationships']['main_image']['data']['id']
     )
-    quantity_choises_list = [1, 5, 10]
-    choise_keyboard = []
-    for quantity in quantity_choises_list:
-        choise_keyboard.append(
-            InlineKeyboardButton(
-                f'+{quantity} кг',
-                callback_data=f'{query.data} {quantity}'
-            ),
-        )
+    choise_keyboard = [
+        InlineKeyboardButton(
+            f'+{quantity} кг', callback_data=f'{query.data} {quantity}'
+        ) for quantity in [1, 5, 10]
+    ]
     keyboard = [
         choise_keyboard,
         [InlineKeyboardButton('Назад', callback_data='HANDLE_MENU')],
@@ -152,11 +148,9 @@ def waiting_email(bot, update):
 
 
 def get_menu_keyboard_markup():
-    keyboard = []
-    for product in fetch_products():
-        keyboard.append(
-            [InlineKeyboardButton(product['name'], callback_data=product['id'])]
-        )
+    keyboard = [
+        [InlineKeyboardButton(prod['name'], callback_data=prod['id'])] for prod in fetch_products()
+    ]
     keyboard.append(
         [InlineKeyboardButton('Корзина', callback_data='HANDLE_CART')]
     )
